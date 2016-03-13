@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Washington Monument</title>
+<title>RGB Washington Monuments</title>
 <style>
 html, body {
   margin: 0;
@@ -18,11 +18,54 @@ canvas {
 <script src="../../lib/three.min.js"></script>
 <script src="../../lib/OrbitControls.js"></script>
 <script>
+function addObelisk(x, y, z, c1, c2, c3) {
+  var obeliskGeometry = new THREE.Geometry();
+	// Define each vertex:
+  // The bottom plane:
+  obeliskGeometry.vertices.push(new THREE.Vector3(x + 8.40, y,          z + 8.40));
+  obeliskGeometry.vertices.push(new THREE.Vector3(x + 8.40, y,          z - 8.40));
+  obeliskGeometry.vertices.push(new THREE.Vector3(x - 8.40, y,          z - 8.40));
+  obeliskGeometry.vertices.push(new THREE.Vector3(x - 8.40, y,          z + 8.40));
+  // Base of the pyramid:
+  obeliskGeometry.vertices.push(new THREE.Vector3(x + 5.25, y + 152.36, z + 5.25));
+  obeliskGeometry.vertices.push(new THREE.Vector3(x + 5.25, y + 152.36, z - 5.25));
+  obeliskGeometry.vertices.push(new THREE.Vector3(x - 5.25, y + 152.36, z - 5.25));
+  obeliskGeometry.vertices.push(new THREE.Vector3(x - 5.25, y + 152.36, z + 5.25));
+  // The tippy-top:
+  obeliskGeometry.vertices.push(new THREE.Vector3(x,        y + 169.29, z));
+  // Create the faces:
+  // Floor:
+  obeliskGeometry.faces.push(new THREE.Face3(0, 2, 1), new THREE.Face3(0, 3, 2));
+  // The four main sides (each side is two triangles):
+  obeliskGeometry.faces.push(new THREE.Face3(0, 1, 5), new THREE.Face3(0, 5, 4));
+  obeliskGeometry.faces.push(new THREE.Face3(1, 2, 6), new THREE.Face3(1, 6, 5));
+  obeliskGeometry.faces.push(new THREE.Face3(2, 3, 7), new THREE.Face3(2, 7, 6));
+  obeliskGeometry.faces.push(new THREE.Face3(3, 0, 4), new THREE.Face3(3, 4, 7));
+  // Four sides of the pyramid:
+  obeliskGeometry.faces.push(new THREE.Face3(4, 5, 8));
+  obeliskGeometry.faces.push(new THREE.Face3(5, 6, 8));
+  obeliskGeometry.faces.push(new THREE.Face3(6, 7, 8));
+  obeliskGeometry.faces.push(new THREE.Face3(7, 4, 8));
+  obeliskGeometry.computeFaceNormals();  // required when using MeshNormalMaterial
+  var sqrt = Math.ceil(Math.sqrt(obeliskGeometry.faces.length));
+	// create array of numbers in random order; assure each value used only once
+	var randomOrder = [0];
+  for (var i = 1; i < obeliskGeometry.faces.length; i++) {
+		randomOrder.splice(Math.floor((randomOrder.length + 1)*Math.random()), 0, i);  // remove "0" elements; add "i" in random position
+	  }
+  for (var i = 0; i < obeliskGeometry.faces.length; i++) {
+    obeliskGeometry.faces[i].color[c1] = 1.0;
+    obeliskGeometry.faces[i].color[c2] = Math.floor(randomOrder[i]/sqrt)/(sqrt - 1);
+	  obeliskGeometry.faces[i].color[c3] =         (randomOrder[i] % sqrt)/(sqrt - 1);
+    }
+	return obeliskGeometry;
+  }
+
 var scene = new THREE.Scene();
 var fieldOfView = 45;
 var aspect = window.innerWidth/window.innerHeight;
 var nearClippingPlane = 0.01;
-var farClippingPlane = 1000;
+var farClippingPlane = 10000;
 var camera = new THREE.PerspectiveCamera(fieldOfView, aspect, nearClippingPlane, farClippingPlane);
 //     Y
 //     |
@@ -34,60 +77,25 @@ var camera = new THREE.PerspectiveCamera(fieldOfView, aspect, nearClippingPlane,
 var renderer = new THREE.WebGLRenderer({antialias: true});
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
-var obeliskMaterial = new THREE.MeshBasicMaterial({ vertexColors: THREE.FaceColors });
-var obeliskGeometry = new THREE.Geometry();
-// The bottom plane:
-obeliskGeometry.vertices.push(new THREE.Vector3( 8.40, -80,     8.40));
-obeliskGeometry.vertices.push(new THREE.Vector3( 8.40, -80,    -8.40));
-obeliskGeometry.vertices.push(new THREE.Vector3(-8.40, -80,    -8.40));
-obeliskGeometry.vertices.push(new THREE.Vector3(-8.40, -80,     8.40));
-// Base of the pyramid:
-obeliskGeometry.vertices.push(new THREE.Vector3( 5.25,  72.36,  5.25));
-obeliskGeometry.vertices.push(new THREE.Vector3( 5.25,  72.36, -5.25));
-obeliskGeometry.vertices.push(new THREE.Vector3(-5.25,  72.36, -5.25));
-obeliskGeometry.vertices.push(new THREE.Vector3(-5.25,  72.36,  5.25));
-// The tippy-top:
-obeliskGeometry.vertices.push(new THREE.Vector3( 0,     89.29,  0));
-// Create the faces:
-// Floor:
-obeliskGeometry.faces.push(new THREE.Face3(0, 2, 1), new THREE.Face3(0, 3, 2));
-// The four main sides (each side is two triangles):
-obeliskGeometry.faces.push(new THREE.Face3(0, 1, 5), new THREE.Face3(0, 5, 4));
-obeliskGeometry.faces.push(new THREE.Face3(1, 2, 6), new THREE.Face3(1, 6, 5));
-obeliskGeometry.faces.push(new THREE.Face3(2, 3, 7), new THREE.Face3(2, 7, 6));
-obeliskGeometry.faces.push(new THREE.Face3(3, 0, 4), new THREE.Face3(3, 4, 7));
-// Four sides of the pyramid:
-obeliskGeometry.faces.push(new THREE.Face3(4, 5, 8));
-obeliskGeometry.faces.push(new THREE.Face3(5, 6, 8));
-obeliskGeometry.faces.push(new THREE.Face3(6, 7, 8));
-obeliskGeometry.faces.push(new THREE.Face3(7, 4, 8));
-console.log(obeliskGeometry);
-obeliskGeometry.computeFaceNormals();  // required when using MeshNormalMaterial
-var sqrt = Math.ceil(Math.sqrt(obeliskGeometry.faces.length));
-for (var i = 0; i < obeliskGeometry.faces.length; i++) {
-  obeliskGeometry.faces[i].color.r = 1.0;
-  obeliskGeometry.faces[i].color.g = Math.floor(i/sqrt)/(sqrt - 1);
-	obeliskGeometry.faces[i].color.b =         (i % sqrt)/(sqrt - 1); 
+var obeliskMaterial = new THREE.MeshBasicMaterial({vertexColors: THREE.FaceColors});
+var obelisks = [];
+var RGB = ["r", "g", "b"];  // the three color property names - this allows us to pick mathematically
+var monuments = 61;
+for (var i = 0; i < monuments; i++) {
+  obelisks[i] = new THREE.Mesh(addObelisk(0, -80, 0, RGB[i % 3], RGB[(i + 1) % 3], RGB[(i + 2) % 3]), obeliskMaterial);
+  obelisks[i].position.x = (monuments/2 - 0.5 - i)*105;
+  scene.add(obelisks[i]);
   }
-console.log(obeliskGeometry);
-var obelisk = new THREE.Mesh(obeliskGeometry, obeliskMaterial);
-scene.add(obelisk);
-var material = new THREE.MeshNormalMaterial();
-var geom = new THREE.BoxGeometry(16, 16, 8);
-var cube = new THREE.Mesh(geom, material);
-cube.position.x = 32;
-cube.position.y = 4;
-scene.add(cube);
 camera.position.x = 0;
 camera.position.y = 80;
-camera.position.z = 320;
+camera.position.z = 320; 
 var render = function () {
   requestAnimationFrame(render);
-  obelisk.rotation.y += 0.01;
-  cube.rotation.y += 0.01;
+	for (var i = 0; i < obelisks.length; i++) {
+  	obelisks[i].rotation.y += 0.01;
+	  }
   renderer.render(scene, camera);
   };
-//console.log(THREE.OrbitControls);
 controls = new THREE.OrbitControls(camera, render.domElement);
 render();
 
